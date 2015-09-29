@@ -114,7 +114,7 @@ class RedundantInfo(_O.RedundantInfo):
         bl1dmatrix = (2**31-1) * np.ones((self.nAntenna,self.nAntenna),dtype=np.int32)
         for n,(i,j) in enumerate(self.bl2d): bl1dmatrix[i,j], bl1dmatrix[j,i] = n,n
         self.bl1dmatrix = bl1dmatrix
-        self.blperant = {ant2ind[a]:ants[a] for a in ants.keys()}
+        self.blperant = np.array([ants[a] for a in sorted(ants.keys())], dtype=int)
         #A: A matrix for logcal amplitude
         A,B = np.zeros((self.nBaseline,self.nAntenna+nUBL)), np.zeros((self.nBaseline,self.nAntenna+nUBL))
         for n,(i,j) in enumerate(self.bl2d):
