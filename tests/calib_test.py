@@ -38,8 +38,10 @@ class TestMethods(unittest.TestCase):
         calpar = np.zeros((2,3,Oc.calpar_size(self.info.nAntenna, len(self.info.ublcount))), dtype=np.float32)
         m,g,v = Oc.unpack_calpar(self.info,calpar)
         self.assertEqual(m['iter'].shape, (2,3))
+        self.assertEqual(m['antchisq'].shape[-1], self.info.nAntenna)
         self.assertTrue(np.all(m['iter'] == 0))
         self.assertTrue(np.all(m['chisq'] == 0))
+        self.assertTrue(np.all(m['antchisq'] == 0))
         self.assertEqual(len(g), 32)
         for i in xrange(32):
             self.assertTrue(np.all(g[i] == 1)) # 1 b/c 10**0 = 1
@@ -199,6 +201,15 @@ class TestRedCal(unittest.TestCase):
             logchi2 = (calibrator.rawCalpar[0,0,1]/(info['At'].shape[1] - info['At'].shape[0])/(2*std**2))**0.5
             linlist[i] = linchi2
             loglist[i] = logchi2
+
+            # The sum of the chi^2's for all antennas should be twice the
+            # calibration chi^2. Omnical uses single precision floats in C, so
+            # the ratio of that sum to chi^2 must be equal to 2 to 5 decimal
+            # places. That should hold in all cases.
+            chi2all = calibrator.rawCalpar[0,0,2]
+            chi2ant = calibrator.rawCalpar[0,0,3+2*(info.nAntenna + len(info.ublcount)):]
+            np.testing.assert_almost_equal(np.sum(chi2ant)/chi2all-2, 0, 5)
+
         self.assertTrue(abs(np.mean(linlist)-1.0) < 0.01)        #check that chi2 of lincal is close enough to 1
         self.assertTrue(np.mean(linlist) < np.mean(loglist))     #chick that chi2 of lincal is smaller than chi2 of logcal
 

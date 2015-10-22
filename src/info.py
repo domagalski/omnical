@@ -5,8 +5,8 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore",category=DeprecationWarning)
     import scipy.sparse as sps
 
-#  ___        _              _          _   ___       __     
-# | _ \___ __| |_  _ _ _  __| |__ _ _ _| |_|_ _|_ _  / _|___ 
+#  ___        _              _          _   ___       __
+# | _ \___ __| |_  _ _ _  __| |__ _ _ _| |_|_ _|_ _  / _|___
 # |   / -_) _` | || | ' \/ _` / _` | ' \  _|| || ' \|  _/ _ \
 # |_|_\___\__,_|\_,_|_||_\__,_\__,_|_||_\__|___|_||_|_| \___/
 
@@ -20,7 +20,7 @@ class RedundantInfo(_O.RedundantInfo):
     'bl2d', (nBaseline,2) the i,j indices of ants in subsetant for each bl
     'ublcount', (nUBL,) number of bls contributing to each ubl
     'ublindex', (nBaseline,) bl2d index for each bl contributing to each ubl
-    'bl1dmatrix', (nAntenna,nAntenna) for each i,j antenna pair, the bl2d index of that bl 
+    'bl1dmatrix', (nAntenna,nAntenna) for each i,j antenna pair, the bl2d index of that bl
     'degenM', (nAntenna+nUBL,nAntenna) matrix projecting out degenerate cal params
     'At', (ncross,nAntenna+nUBL), sparse, matrix containing amp cal equations
     'Bt', (ncross,nAntenna+nUBL), sparse, matrix containing phs cal equations
@@ -57,7 +57,7 @@ class RedundantInfo(_O.RedundantInfo):
     def __setitem__(self,k,val): return self.__setattr__(k,val)
     def order_data(self, dd):
         '''Create a data array ordered for use in _omnical.redcal.  'dd' is
-        a dict whose keys are (i,j) antenna tuples; antennas i,j should be ordered to reflect 
+        a dict whose keys are (i,j) antenna tuples; antennas i,j should be ordered to reflect
         the conjugation convention of the provided data.  'dd' values are 2D arrays
         of (time,freq) data.''' # XXX does time/freq ordering matter.  should data be 2D instead?
         return np.array([dd[bl] if dd.has_key(bl) else dd[bl[::-1]].conj()
@@ -91,8 +91,15 @@ class RedundantInfo(_O.RedundantInfo):
         oriented to be redundant, it may be necessary to have i > j.  If this is the case, then
         when calibrating visibilities listed as j,i data will have to be conjugated.'''
         ants = {}
+        def __incr_ant(ant_num):
+            if ants.has_key(ant_num):
+                ants[ant_num] += 1
+            else:
+                ants[ant_num] = 1
         for ubl_gp in reds:
-            for (i,j) in ubl_gp: ants[i] = ants[j] = None
+            for (i,j) in ubl_gp:
+                __incr_ant(i)
+                __incr_ant(j)
         self.subsetant = np.array(ants.keys(), dtype=np.int32)
         ant2ind = {}
         for i,ant in enumerate(self.subsetant): ant2ind[ant] = i
@@ -107,6 +114,7 @@ class RedundantInfo(_O.RedundantInfo):
         bl1dmatrix = (2**31-1) * np.ones((self.nAntenna,self.nAntenna),dtype=np.int32)
         for n,(i,j) in enumerate(self.bl2d): bl1dmatrix[i,j], bl1dmatrix[j,i] = n,n
         self.bl1dmatrix = bl1dmatrix
+        self.blperant = np.array([ants[a] for a in sorted(ants.keys())], dtype=int)
         #A: A matrix for logcal amplitude
         A,B = np.zeros((self.nBaseline,self.nAntenna+nUBL)), np.zeros((self.nBaseline,self.nAntenna+nUBL))
         for n,(i,j) in enumerate(self.bl2d):
@@ -116,7 +124,7 @@ class RedundantInfo(_O.RedundantInfo):
         # XXX nothing up to this point requires antloc; in principle, degenM can be deduced
         # from reds alone, removing need for antpos.  So that'd be nice, someday
         self.antloc = antpos.take(self.subsetant, axis=0).astype(np.float32)
-        self.ubl = np.array([np.mean([antpos[j]-antpos[i] for i,j in ublgp],axis=0) for ublgp in reds], dtype=np.float32) 
+        self.ubl = np.array([np.mean([antpos[j]-antpos[i] for i,j in ublgp],axis=0) for ublgp in reds], dtype=np.float32)
         # XXX why are 1,0 appended to positions/ubls?
         a = np.array([np.append(ai,1) for ai in self.antloc], dtype=np.float32)
         d = np.array([np.append(ubli,0) for ubli in self.ubl], dtype=np.float32)
@@ -165,7 +173,7 @@ class RedundantInfo(_O.RedundantInfo):
         yxB[:, na:2*na] = xyB[:, :na]
         yxB[:, 2*na:] = xyB[:, 2*na:]
         return xyA, xyB, yxA, yxB
-    
+
 import os
 
 KEYS = [
@@ -200,7 +208,7 @@ MARKER = 9999999
 class RedundantInfoLegacy(RedundantInfo):
     def __init__(self, filename=None, verbose=False, preview_only=False, txtmode=False, threshold=128):
         RedundantInfo.__init__(self, filename=None)
-        self.threshold = threshold 
+        self.threshold = threshold
         if filename:
             if txtmode: self.fromfile_txt(filename, verbose=verbose)
             else: self.fromfile(filename, verbose=verbose, preview_only=preview_only)
@@ -251,7 +259,7 @@ class RedundantInfoLegacy(RedundantInfo):
         self.nUBL = len(self.ublcount) # XXX legacy for file format
         self.subsetbl = np.arange(self.nBaseline, dtype=np.int32) # XXX legacy for file format
         def fmt(k):
-            if k in ['At','Bt']: 
+            if k in ['At','Bt']:
                 sk = self[k].T
                 if self.nAntenna > self.threshold:
                     row,col = sk.nonzero()
@@ -265,7 +273,7 @@ class RedundantInfoLegacy(RedundantInfo):
         d = [fmt(k) for k in d]
         d = [[MARKER]]+[k for i in zip(d,[[MARKER]]*len(d)) for k in i]
         return np.concatenate([np.asarray(k).flatten() for k in d])
-    def from_array(self, d, verbose=False, preview_only=False): 
+    def from_array(self, d, verbose=False, preview_only=False):
         '''Initialize fields from data contained in 2D float array used to store data to file.'''
         # XXX from_array and to_array do not match, need to change that, but this affects fromfile & fromfile_txt
         # XXX maybe not all of these variables should be exposed (i.e. some could be C only)
@@ -368,7 +376,7 @@ class RedundantInfoLegacy(RedundantInfo):
                 #try: diff.append(la.norm((self[key]-info[key]).todense())==0)
                 #except: diff.append(False)
             diff.append(True)
-            
+
             bool = True
             for i in diff: bool &= i
             #print the first key found different (this will only trigger when the two info's have the same shape, so probably not very useful)

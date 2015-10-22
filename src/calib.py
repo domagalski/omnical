@@ -40,11 +40,11 @@ PI = np.pi
 # will be over time and frequency, as in the input data array
 # XXX is the omnical baseline convention conjugated wrt aipy?  I think so
 
-def calpar_size(nant, nubl):
+def calpar_size(nant, nubl, has_chi2ant=True):
     """
     Quickly compute the size of the calpar array.
     """
-    return 3 + 2*(nant+nubl) + nant
+    return 3 + 2*(nant+nubl) + bool(has_chi2ant)*nant
 
 def pack_calpar(info, calpar, gains=None, vis=None):
     '''Pack gain solutions and/or model visibilities for baseline types into a 'calpar' array that follows
@@ -83,7 +83,8 @@ def unpack_calpar(info, calpar):
     'chisq', gains as keys of antenna number, and vis has unique baseline solutions, indexed by a
     representative baseline.'''
     meta, gains, vis = {}, {}, {}
-    meta['iter'],_,meta['chisq'] = calpar[...,0], calpar[...,1], calpar[...,2] # XXX do we need "1"?
+    meta['iter'],meta['chisq'] = calpar[...,0], calpar[...,2]
+    meta['antchisq'] = calpar[...,calpar_size(info.nAntenna, len(info.ublcount), False):]
     for i,ai in enumerate(info.subsetant):
         gains[ai] = 10**calpar[...,3+i] * np.exp(1j*calpar[...,3+info.nAntenna+i])
     for u in xrange(len(info.ublcount)):

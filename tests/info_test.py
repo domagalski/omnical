@@ -45,6 +45,10 @@ class TestRedInfo(unittest.TestCase):
         self.assertTrue(np.all(i.ublindex == np.arange(5,dtype=np.int32)))
         self.assertTrue(np.all(i.ubl[0] == np.array([1.,0,0],dtype=np.float32)))
         self.assertTrue(np.all(i.ubl[1] == np.array([2.,0,0],dtype=np.float32)))
+        self.assertTrue(i.blperant[0] == 2)
+        self.assertTrue(i.blperant[1] == 3)
+        self.assertTrue(i.blperant[2] == 3)
+        self.assertTrue(i.blperant[3] == 2)
     def test_bl_order(self):
         antpos = np.array([[0.,0,0],[1,0,0],[2,0,0],[3,0,0]])
         reds = [[(0,1),(1,2),(2,3)],[(0,2),(1,3)]]
@@ -125,4 +129,4 @@ class TestRedInfo(unittest.TestCase):
         self.assertTrue(i1.get_reds() == i2.get_reds())
 
 if __name__ == '__main__':
-    unittest.main()        
+    unittest.main()
