@@ -84,9 +84,10 @@ def unpack_calpar(info, calpar):
     representative baseline.'''
     meta, gains, vis = {}, {}, {}
     meta['iter'],meta['chisq'] = calpar[...,0], calpar[...,2]
-    meta['antchisq'] = calpar[...,calpar_size(info.nAntenna, len(info.ublcount), False):]
+    chisq_per_ant = calpar[...,calpar_size(info.nAntenna, len(info.ublcount), False):]
     for i,ai in enumerate(info.subsetant):
         gains[ai] = 10**calpar[...,3+i] * np.exp(1j*calpar[...,3+info.nAntenna+i])
+        meta['chisq%d' % (ai)] = chisq_per_ant[...,i]
     for u in xrange(len(info.ublcount)):
         # XXX possible that frombuffer might do this a bit more efficiently
         v = calpar[...,3+2*info.nAntenna+2*u] + 1j*calpar[...,3+2*info.nAntenna+2*u+1]

@@ -650,6 +650,7 @@ void lincal(vector<vector<float> >* data, vector<vector<float> >* additivein, re
 		module->cdata2[b][1] = gre * module->ubl0[info->bltoubl[b]][1] + gim * module->ubl0[info->bltoubl[b]][0];
 		delta = (pow(module->cdata2[b][0] - module->cdata1[b][0], 2) + pow(module->cdata2[b][1] - module->cdata1[b][1], 2));
 		chisq += delta;
+        // XXX have a starting_chisq_ant?
 		//if (delta != 0){
 			//cout << delta << " " << module->cdata2[b][0]-1 << " " << module->cdata2[b][1] << " " << module->ubl0[info->bltoubl[b]][0]-1 << " " << module->ubl0[info->bltoubl[b]][1] * info->reversed[b] << " " <<  a1 << " " <<  a2 << " " <<  b << " " << info->reversed[b] << endl;
 		//}
@@ -802,24 +803,25 @@ void lincal(vector<vector<float> >* data, vector<vector<float> >* additivein, re
 			additiveout->at(b)[0] = module->cdata1[b][0] - module->cdata2[b][0];
 			additiveout->at(b)[1] = module->cdata1[b][1] - module->cdata2[b][1];
 		}
+        // Create a chisq for each antenna. Right now, this is done at every time and
+        // frequency, since that's how lincal is called, but that can be summed later
+        // over all times and frequencies to get a chisq for each antenna.
+        int chisq_ant = 3 + 2*(info -> nAntenna + nubl);
+        for (int b = 0; b < (module -> cdata2).size(); b++){
+            delta  = pow(module->cdata2[b][0] - module->cdata1[b][0], 2);
+            delta += pow(module->cdata2[b][1] - module->cdata1[b][1], 2);
+            a1 = info->bl2d[b][0];
+            a2 = info->bl2d[b][1];
+            calpar -> at(chisq_ant + a1) += delta;
+            calpar -> at(chisq_ant + a2) += delta;
+        }
+	
 	}else{////if chisq didnt decrease, keep everything untouched
 		calpar->at(0) += 0;
 		calpar->at(2) = starting_chisq;
+        // XXX do we need to put a dummy value in for chisq per ant?
 	}
 
-	// Create a chisq for each antenna. Right now, this is done at every time and
-	// frequency, since that's how lincal is called, but that can be summed later
-	// over all times and frequencies to get a chisq for each antenna.
-	int chisq_ant = 3 + 2*(info -> nAntenna + nubl);
-	for (int b = 0; b < (module -> cdata2).size(); b++){
-		delta  = pow(module->cdata2[b][0] - module->cdata1[b][0], 2);
-		delta += pow(module->cdata2[b][1] - module->cdata1[b][1], 2);
-		a1 = info->bl2d[b][0];
-		a2 = info->bl2d[b][1];
-		calpar -> at(chisq_ant + a1) += delta;
-		calpar -> at(chisq_ant + a2) += delta;
-    }
-	
 	//cout << "lincal DBG v "  << module->cdata1[DBGbl][0] << " " << module->cdata1[DBGbl][1] << endl<<flush;
 	//cout << "lincal DBG c0g0g0 "  << module->cdata2[DBGbl][0] << " " << module->cdata2[DBGbl][1] << endl<<flush;
 	return;
