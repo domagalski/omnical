@@ -66,7 +66,8 @@ def pack_calpar(info, calpar, gains=None, vis=None):
             phs = np.angle(gains[ai]); phs.shape = ((1,) + phs.shape)[-2:]
             calpar[...,3+i], calpar[...,3+nant+i] = amp, phs
     if vis is not None:
-        for (i,j),v in vis.iteritems():
+        for (ai,aj),v in vis.iteritems():
+            i,j = info.ant_index(ai), info.ant_index(aj)
             n = info.bl1dmatrix[i,j] # index of this bl in info.bl2d
             u = info.bltoubl[n] # index of ubl that this bl corresponds to
             if tuple(info.bl2d[n]) != (i,j): # check if bl reversed wrt ubl
@@ -93,7 +94,7 @@ def unpack_calpar(info, calpar):
         v = calpar[...,3+2*info.nAntenna+2*u] + 1j*calpar[...,3+2*info.nAntenna+2*u+1]
         n = info.ublindex[np.sum(info.ublcount[:u])]
         i,j = info.bl2d[n]
-        vis[(i,j)] = v
+        vis[(info.subsetant[i],info.subsetant[j])] = v
     return meta, gains, vis
 
 def redcal(data, info, xtalk=None, gains=None, vis=None,

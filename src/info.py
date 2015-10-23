@@ -85,6 +85,12 @@ class RedundantInfo(_O.RedundantInfo):
             if self.AtAi.size == 0:
                 self.AtAi = la.pinv(self.At.dot(self.At.T).todense(),rcond=1e-6).astype(np.float32)#(AtA)^-1
                 self.BtBi = la.pinv(self.Bt.dot(self.Bt.T).todense(),rcond=1e-6).astype(np.float32)#(BtB)^-1
+    def ant_index(self, i):
+        try: return self._ant2ind[i]
+        except(AttributeError):
+            self._ant2ind = {}
+            for x,ant in enumerate(self.subsetant): self._ant2ind[ant] = x
+            return self._ant2ind[i]
     def init_from_reds(self, reds, antpos):
         '''Initialize RedundantInfo from a list where each entry is a group of redundant baselines.
         Each baseline is a (i,j) tuple, where i,j are antenna indices.  To ensure baselines are
@@ -101,11 +107,9 @@ class RedundantInfo(_O.RedundantInfo):
                 __incr_ant(i)
                 __incr_ant(j)
         self.subsetant = np.array(ants.keys(), dtype=np.int32)
-        ant2ind = {}
-        for i,ant in enumerate(self.subsetant): ant2ind[ant] = i
         self.nAntenna = self.subsetant.size
         nUBL = len(reds)
-        bl2d = np.array([(ant2ind[i],ant2ind[j],u) for u,ubl_gp in enumerate(reds) for i,j in ubl_gp], dtype=np.int32)
+        bl2d = np.array([(self.ant_index(i),self.ant_index(j),u) for u,ubl_gp in enumerate(reds) for i,j in ubl_gp], dtype=np.int32)
         self.bl2d = bl2d[:,:2]
         self.nBaseline = bl2d.shape[0]
         self.bltoubl = bl2d[:,2]
