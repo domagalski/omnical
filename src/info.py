@@ -97,15 +97,10 @@ class RedundantInfo(_O.RedundantInfo):
         oriented to be redundant, it may be necessary to have i > j.  If this is the case, then
         when calibrating visibilities listed as j,i data will have to be conjugated.'''
         ants = {}
-        def __incr_ant(ant_num):
-            if ants.has_key(ant_num):
-                ants[ant_num] += 1
-            else:
-                ants[ant_num] = 1
         for ubl_gp in reds:
             for (i,j) in ubl_gp:
-                __incr_ant(i)
-                __incr_ant(j)
+                ants[i] = ants.get(i,0) + 1
+                ants[j] = ants.get(j,0) + 1
         self.subsetant = np.array(ants.keys(), dtype=np.int32)
         self.nAntenna = self.subsetant.size
         nUBL = len(reds)

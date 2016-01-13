@@ -7,10 +7,10 @@ def filter_reds(reds, bls=None, ex_bls=None, ants=None, ex_ants=None, ubls=None,
     if ubls or ex_ubls:
         bl2gp = {}
         for i,gp in enumerate(reds):
-            for bl in gp: bl2gp[bl] = bl2gp[bl[::-1]] = i
-        if ubls: ubls = [bl2gp[bl] for bl in ubls if bl2gp.has_key(bl)]
+            for bl in gp: bl2gp[bl] = bl2gp[bl[::-1]] = bl2gp.get(bl,[]) + [i]
+        if ubls: ubls = reduce(lambda x,y: x+y, [bl2gp[bl] for bl in ubls if bl2gp.has_key(bl)])
         else: ubls = range(len(reds))
-        if ex_ubls: ex_ubls = [bl2gp[bl] for bl in ex_ubls if bl2gp.has_key(bl)]
+        if ex_ubls: ex_ubls = reduce(lambda x,y: x+y, [bl2gp[bl] for bl in ex_ubls if bl2gp.has_key(bl)])
         else: ex_ubls = []
         reds = [gp for i,gp in enumerate(reds) if i in ubls and i not in ex_ubls]
     if bls is None: bls = [bl for gp in reds for bl in gp]
