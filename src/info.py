@@ -96,11 +96,12 @@ class RedundantInfo(_O.RedundantInfo):
         Each baseline is a (i,j) tuple, where i,j are antenna indices.  To ensure baselines are
         oriented to be redundant, it may be necessary to have i > j.  If this is the case, then
         when calibrating visibilities listed as j,i data will have to be conjugated.'''
+        reds = [[(int(i),int(j)) for i,j in gp] for gp in reds]
         ants = {}
         for ubl_gp in reds:
             for (i,j) in ubl_gp:
-                ants[int(i)] = ants.get(int(i),0) + 1
-                ants[int(j)] = ants.get(int(j),0) + 1
+                ants[i] = ants.get(i,0) + 1
+                ants[j] = ants.get(j,0) + 1
         self.subsetant = np.array(ants.keys(), dtype=np.int32)
         self.nAntenna = self.subsetant.size
         nUBL = len(reds)
