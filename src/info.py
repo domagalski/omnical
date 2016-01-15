@@ -99,8 +99,8 @@ class RedundantInfo(_O.RedundantInfo):
         ants = {}
         for ubl_gp in reds:
             for (i,j) in ubl_gp:
-                ants[i] = ants.get(int(i),0) + 1
-                ants[j] = ants.get(int(j),0) + 1
+                ants[int(i)] = ants.get(int(i),0) + 1
+                ants[int(j)] = ants.get(int(j),0) + 1
         self.subsetant = np.array(ants.keys(), dtype=np.int32)
         self.nAntenna = self.subsetant.size
         nUBL = len(reds)
