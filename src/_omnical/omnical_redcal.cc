@@ -168,6 +168,7 @@ float medianAngle (vector<float> *list){
 /******************************************************/
 /******************************************************/
 //XXX linear algebra
+/*
 void vecmatmul(vector<vector<double> > * Afitting, vector<float> * v, vector<float> * ampfit){
 	int i, j;
 	double sum;
@@ -176,12 +177,13 @@ void vecmatmul(vector<vector<double> > * Afitting, vector<float> * v, vector<flo
 	for(i=0; i < n; i++){
 		sum = 0.0;
 		for(j = 0; j < m; j++){
-			sum = sum + (Afitting->at(i))[j] * (v->at(j));
+			sum += (Afitting->at(i))[j] * (v->at(j));
 		}
 		(ampfit->at(i)) = sum;
 	}
 	return;
 }
+*/
 
 //XXX linear algebra
 void vecmatmul(vector<vector<float> > * Afitting, vector<float> * v, vector<float> * ampfit){
@@ -192,7 +194,7 @@ void vecmatmul(vector<vector<float> > * Afitting, vector<float> * v, vector<floa
 	for(i=0; i < n; i++){
 		sum = 0.0;
 		for(j = 0; j < m; j++){
-			sum = sum + (Afitting->at(i))[j] * (v->at(j));
+			sum += (Afitting->at(i))[j] * (v->at(j));
 		}
 		(ampfit->at(i)) = sum;
 	}
@@ -200,6 +202,7 @@ void vecmatmul(vector<vector<float> > * Afitting, vector<float> * v, vector<floa
 }
 
 //XXX linear algebra
+/*
 void vecmatmul(vector<vector<int> > * A, vector<float> * v, vector<float> * yfit){
 	int i, j;
 	double sum;
@@ -208,13 +211,13 @@ void vecmatmul(vector<vector<int> > * A, vector<float> * v, vector<float> * yfit
 	for(i=0; i < n; i++){
 		sum = 0.0;
 		for(j = 0; j < m; j++){
-			sum = sum + (A->at(i))[j] * (v->at(j));
+			sum += (A->at(i))[j] * (v->at(j));
 		}
 		(yfit->at(i)) = sum;
 	}
 	return;
 }
-
+*/
 
 /******************************************************/
 /******************************************************/

@@ -38,10 +38,11 @@ class TestMethods(unittest.TestCase):
         calpar = np.zeros((2,3,Oc.calpar_size(self.info.nAntenna, len(self.info.ublcount))), dtype=np.float32)
         m,g,v = Oc.unpack_calpar(self.info,calpar)
         self.assertEqual(m['iter'].shape, (2,3))
-        self.assertEqual(m['antchisq'].shape[-1], self.info.nAntenna)
+        self.assertEqual(len(filter(lambda s: 'chisq' in s, m.keys()))-1, self.info.nAntenna)
         self.assertTrue(np.all(m['iter'] == 0))
         self.assertTrue(np.all(m['chisq'] == 0))
-        self.assertTrue(np.all(m['antchisq'] == 0))
+        for a in self.info.subsetant:
+            self.assertTrue(np.all(m['chisq%d'%a] == 0))
         self.assertEqual(len(g), 32)
         for i in xrange(32):
             self.assertTrue(np.all(g[i] == 1)) # 1 b/c 10**0 = 1
@@ -209,6 +210,9 @@ class TestRedCal(unittest.TestCase):
             chi2all = calibrator.rawCalpar[0,0,2]
             chi2ant = calibrator.rawCalpar[0,0,3+2*(info.nAntenna + len(info.ublcount)):]
             np.testing.assert_almost_equal(np.sum(chi2ant)/chi2all-2, 0, 5)
+
+            # I think additiveout can be used to get chi^2 and chi^2/antenna
+            #print calibrator.rawCalpar[...,1]
 
         self.assertTrue(abs(np.mean(linlist)-1.0) < 0.01)        #check that chi2 of lincal is close enough to 1
         self.assertTrue(np.mean(linlist) < np.mean(loglist))     #chick that chi2 of lincal is smaller than chi2 of logcal

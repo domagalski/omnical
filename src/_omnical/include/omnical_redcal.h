@@ -130,16 +130,6 @@ float median (vector<float> list); //Not using pointer because the process invol
 
 float medianAngle (vector<float> *list); //Not using pointer because the process involves sorting which will modify the list, which may be bad
 
-float mean (vector<float> *v, int start = -1, int end = -1);// take mean from start to end indices of vector v. 0 indexed
-
-vector<float> stdev(vector<float> *v);//returns {mean, sample standard deviation}. Created by Hrant and modified by Jeff
-
-float meanAngle (vector<float> *list);
-
-vector<float> stdevAngle(vector<float> *v);
-
-bool invert(vector<vector<int> > * AtNinvAori, vector<vector<double> > * AtNinvAinv );
-bool invert(vector<vector<float> > * AtNinvAori, vector<vector<double> > * AtNinvAinv );
 ///////////////REDUNDANT BASELINE CALIBRATION STUFF///////////////////
 /////////////////////////////////////////////
 
