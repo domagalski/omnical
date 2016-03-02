@@ -169,7 +169,7 @@ float medianAngle (vector<float> *list){
 void vecmatmul(vector<vector<float> > * Afitting, vector<float> * v, vector<float> * ampfit){
 	int i, j;
 	double sum;
-	int n = Afitting->size();//todo size check
+	int n = Afitting->size();//TODO size check
 	int m = v->size();
 	for(i=0; i < n; i++){
 		sum = 0.0;

@@ -118,12 +118,6 @@ vector<float> conjugate (vector<float> x);
 
 float phaseWrap (float x, float offset = -atan2(0,-1));//Wrap phase to be on (offset, offset+2pi]
 
-
-
-///////////////CHI SQUARE STUFF///////////////////
-/////////////////////////////////////////////
-
-
 ///////////////POINT SOURCE STUFF///////////////////
 /////////////////////////////////////////////
 float median (vector<float> list); //Not using pointer because the process involves sorting which will modify the list, which may be bad
