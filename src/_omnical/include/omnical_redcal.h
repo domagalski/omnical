@@ -19,6 +19,10 @@
 #define uint unsigned int
 using namespace std;
 
+extern "C" {
+    #include <cblas.h>
+}
+
 struct redundantinfo{
 	int nAntenna;//number of good antennas among all (64) antennas, same as the length of subsetant
 	//int nUBL;//number of unique baselines

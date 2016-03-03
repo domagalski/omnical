@@ -19,6 +19,9 @@
 #include <algorithm>
 #define uint unsigned int
 using namespace std;
+extern "C" {
+    #include <cblas.h>
+}
 const string FILENAME = "omnical_redcal.cc";
 const float PI = atan2(0, -1);
 const float UBLPRECISION = pow(10, -3);
@@ -165,19 +168,24 @@ float medianAngle (vector<float> *list){
 	return atan2(median(yList), median(xList));
 }
 
-//XXX linear algebra
 void vecmatmul(vector<vector<float> > * Afitting, vector<float> * v, vector<float> * ampfit){
-	int i, j;
-	double sum;
-	int n = Afitting->size();//TODO size check
-	int m = v->size();
-	for(i=0; i < n; i++){
-		sum = 0.0;
-		for(j = 0; j < m; j++){
-			sum += (Afitting->at(i))[j] * (v->at(j));
-		}
-		(ampfit->at(i)) = sum;
-	}
+    int i, j; // looping indices
+	int nrows = Afitting -> size(), ncols = v -> size(); // Array dimensions
+	float *in_v = v -> data(), *out_v = ampfit -> data(); // in/out vectors
+	float *Amatrix = new float[nrows*ncols]; // matrix that's nice for cblas
+
+	// Create a 1-D matrix that's nice for BLAS
+	for (i=0; i<nrows; i++){
+        for (j=0; j<ncols; j++)
+            Amatrix[ncols*i + j] = (Afitting -> at(i))[j];
+    }
+
+    // Run the BLAS function
+    cblas_sgemv(CblasRowMajor, CblasNoTrans,
+                nrows, ncols, 1, Amatrix, ncols, in_v, 1, 0, out_v, 1);
+
+    // Cleanup
+    delete Amatrix;
 	return;
 }
 
