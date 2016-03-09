@@ -83,22 +83,14 @@ float square(float x){
 	return pow( max(min(x, MAX_POW_2), -MAX_POW_2), 2);
 }
 
-// XXX urghh...
-float amp(vector<float> * x){
-	return sqrt( square(x->at(0))  + square(x->at(1)) );
-}
-
-// XXX This can stay for now...
 float amp(float x, float y){
 	return sqrt( square(x)  + square(y) );
 }
 
-// XXX Use this version
 float amp(complex float cx){
     return sqrt(crealf(cx*conjf(cx)));
 }
 
-// XXX maybe keep this one?
 float phase(float re, float im){
 	/*if (re == 0 and im == 0){
 		return 0;
@@ -106,25 +98,8 @@ float phase(float re, float im){
 	return atan2(im, re);
 }
 
-// XXX I really hate this 2-element vector crap 
-float phase(vector<float> * c){
-	return atan2(c->at(1), c->at(0));
-};
-
-// XXX Plan to make this the standard.
 float phase(complex float cx){
     return cargf(cx);
-}
-
-// Phase this out in favor of BLAS
-float norm(vector<vector<float> > * v){
-	float res = 0;
-	for (unsigned int i = 0; i < v->size(); i++){
-		for (unsigned int j = 0; j < v->at(i).size(); j++){
-			res += pow(v->at(i)[j], 2);
-		}
-	}
-	return pow(res, 0.5);
 }
 
 // BLAS version, maybe use arrays in stead of vectors.
@@ -201,25 +176,6 @@ void vecmatmul(vector<float> * Afitting, vector<float> * v, vector<float> * ampf
 	return;
 }
 
-vector<float> minimizecomplex(vector<vector<float> >* a, vector<vector<float> >* b){
-    //A*c = B where A and B complex vecs, c complex number, solve for c
-    // XXX I think this code is solving for c in A = B*c
-    // A            = B*c
-    // A * {B}      = B * {B} * c
-    // sum(A * {B}) = sum(B * {B}) * c
-    // c            = sum(A * {B}) / sum(B * {B})
-	vector<float> sum1(2, 0);
-	for (uint i =0; i < a->size(); i++){
-		sum1[0] += a->at(i)[0] * b->at(i)[0] + a->at(i)[1] * b->at(i)[1];
-		sum1[1] += a->at(i)[1] * b->at(i)[0] - a->at(i)[0] * b->at(i)[1];
-	}
-	float sum2 = pow(norm(b), 2);
-	sum1[0] = sum1[0] / sum2;
-	sum1[1] = sum1[1] / sum2;
-	return sum1;
-}
-
-// XXX mine's smaller...
 complex float minimizecomplex(vector<complex float> *a, vector<complex float> *b){
     // A = B*c where A and B complex vecs, c complex number, solve for c
     // A            = B*c
@@ -242,14 +198,17 @@ void logcaladd(vector<complex float> *data,
                int computeUBLFit,
                int compute_calpar,
                calmemmodule* module){
-    //if computeUBLFit is 1, compute the ubl estimates given data and calpars, rather than read ubl estimates from input
+    // if computeUBLFit is 1, compute the ubl estimates given data and calpars,
+    // rather than read ubl estimates from input
 	int nubl = info->ublindex.size();
     int ai, aj; // antenna indices
+
 	////initialize data and g0 ubl0
 	for (unsigned int b = 0; b < (module->cdata1).size(); b++){
 	    // XXX
 		module->cdata1[b] = data->at(b) - additivein->at(b);
 	}
+
 	float amptmp;
 	unsigned int cbl;
 	for (int a = 0; a < info->nAntenna; a++){
@@ -262,7 +221,9 @@ void logcaladd(vector<complex float> *data,
 			module->ubl0[u] =  calpar->at(3 + 2 * info->nAntenna + 2 * u);
 			module->ubl0[u] += I*calpar->at(3 + 2 * info->nAntenna + 2 * u + 1);
 		}
-	} else{//if computeUBLFit is 1, compute the ubl estimates given data and calpars, rather than read ubl estimates from input
+	} else{
+	    // if computeUBLFit is 1, compute the ubl estimates given data and
+	    // calpars, rather than read ubl estimates from input
 		for (int u = 0; u < nubl; u++){
 			for (unsigned int i = 0; i < module->ubl2dgrp1[u].size(); i++){
 				cbl = info->ublindex[u][i];
@@ -325,9 +286,6 @@ void logcaladd(vector<complex float> *data,
 	}
 	vecmatmul(&(info->AtAi), &(module->x3), &(module->x1));
 	vecmatmul(&(info->BtBi), &(module->x4), &(module->x2));
-	//vecmatmul(&(info->AtAiAt), &(module->amp1), &(module->x1));////This is actually slower than seperate multiplications
-	//vecmatmul(&(info->BtBiBt), &(module->pha1), &(module->x2));
-
 
 	for(int b = 0; b < ncross; b++) {
 		ai = info->bl2d[b][0];
@@ -383,7 +341,9 @@ void lincal(vector<complex float> *data,
 			module->ubl0[u] = calpar->at(3 + 2 * info->nAntenna + 2 * u);
 			module->ubl0[u] += I*calpar->at(3 + 2 * info->nAntenna + 2 * u + 1);
 		}
-	} else{//if computeUBLFit is 1, compute the ubl estimates given data and calpars, rather than read ubl estimates from input
+	} else{
+	    // if computeUBLFit is 1, compute the ubl estimates given data and
+	    // calpars, rather than read ubl estimates from input
 		for (int u = 0; u < nubl; u++){
 			for (unsigned int i = 0; i < module->ubl2dgrp1[u].size(); i++){
 				cbl = info->ublindex[u][i];
@@ -417,14 +377,15 @@ void lincal(vector<complex float> *data,
 	float componentchange = 100;
 	while(iter < maxiter and componentchange > convergethresh){
 		iter++;
-		//cout << "iteration #" << iter << endl; cout.flush();
-		////calpar g
 
-		for (unsigned int a3 = 0; a3 < module->g3.size(); a3++){////g3 will be containing the final dg, g1, g2 will contain a and b as in the cost function LAMBDA = ||a + b*g||^2
+		for (unsigned int a3 = 0; a3 < module->g3.size(); a3++){
+		    // g3 will be containing the final dg, g1, g2 will contain a and b
+		    // as in the cost function LAMBDA = ||a + b*g||^2
 			for (unsigned int a = 0; a < module->g3.size(); a++){
 				cbl = info->bl1dmatrix[a3][a];
                 // cbl is unsigned, so gauranteed not < 0
-				if (cbl > module->cdata1.size() or info->ublcount[info->bltoubl[cbl]] < 2){//badbl or ubl has only 1 bl
+				if (cbl > module->cdata1.size() or info->ublcount[info->bltoubl[cbl]] < 2){
+				    //badbl or ubl has only 1 bl
 					module->g1[a] = 0;
 					module->g2[a] = 0;
 				}else if(info->bl2d[cbl][1] == a3){
@@ -451,8 +412,9 @@ void lincal(vector<complex float> *data,
 		}
 
 
-		////Update g and ubl, do not update single-bl bls since they are not reversible. Will reverse this step later is chisq increased
-		//float fraction;
+		// Update g and ubl, do not update single-bl bls since they are not
+		// reversible. Will reverse this step later is chisq increased
+		// float fraction;
 		for (unsigned int a = 0; a < module->g3.size(); a++){
 			module->g0[a] = stepsize2 * module->g0[a] + stepsize * module->g3[a];
 		}
@@ -465,7 +427,9 @@ void lincal(vector<complex float> *data,
 		//compute chisq and decide convergence
 		chisq2 = 0;
 		for (unsigned int b = 0; b < (module->cdata2).size(); b++){
-			if ((info->ublcount)[info->bltoubl[b]] > 1){//automatically use 0 for single-bl ubls, their actaul values are not updated yet
+			if ((info->ublcount)[info->bltoubl[b]] > 1){
+			    // automatically use 0 for single-bl ubls, their actual values
+			    // are not updated yet
 				a1 = info->bl2d[b][0];
 				a2 = info->bl2d[b][1];
 				gain = conjf(module->g0[a1]) * module->g0[a2];
@@ -476,10 +440,13 @@ void lincal(vector<complex float> *data,
 		}
 		componentchange = (chisq - chisq2) / chisq;
 
-        if (componentchange > 0){//if improved, keep g0 and ubl0 updates, and update single-bl ubls and chisq
+        if (componentchange > 0){
+            // if improved, keep g0 and ubl0 updates, and update single-bl ubls 
+            // and chisq
 			chisq = chisq2;
 			for (unsigned int u = 0; u < module->ubl3.size(); u++){
-			//make sure there's no error on unique baselines with only 1 baseline
+			    // make sure there's no error on unique baselines with only 1 
+			    // baseline
 				for (unsigned int i = 0; i < module->ubl2dgrp1[u].size(); i++){
 					cbl = info->ublindex[u][i];
                     ai = info->bl2d[cbl][0]; aj = info->bl2d[cbl][1];
@@ -521,9 +488,10 @@ void lincal(vector<complex float> *data,
 		for (unsigned int b = 0; b < (module->cdata2).size(); b++){
 			additiveout->at(b) = module->cdata1[b] - module->cdata2[b];
 		}
-        // Create a chisq for each antenna. Right now, this is done at every time and
-        // frequency, since that's how lincal is called, but that can be summed later
-        // over all times and frequencies to get a chisq for each antenna.
+        // Create a chisq for each antenna. Right now, this is done at every
+        // time and frequency, since that's how lincal is called, but that can
+        // be summed later over all times and frequencies to get a chisq for
+        // each antenna.
         int chisq_ant = 3 + 2*(info -> nAntenna + nubl);
         for (int b = 0; b < (module -> cdata2).size(); b++){
 		    difftmp = module->cdata2[b] - module->cdata1[b];
@@ -540,8 +508,6 @@ void lincal(vector<complex float> *data,
         // XXX do we need to put a dummy value in for chisq per ant?
 	}
 
-	//cout << "lincal DBG v "  << module->cdata1[DBGbl][0] << " " << module->cdata1[DBGbl][1] << endl<<flush;
-	//cout << "lincal DBG c0g0g0 "  << module->cdata2[DBGbl][0] << " " << module->cdata2[DBGbl][1] << endl<<flush;
 	return;
 }
 
@@ -594,10 +560,10 @@ void gaincal(vector<complex float> *data,
 	float componentchange = 100;
 	while(iter < maxiter and componentchange > convergethresh){
 		iter++;
-		//cout << "iteration #" << iter << endl; cout.flush();
-		////calpar g
 
-		for (unsigned int a3 = 0; a3 < module->g3.size(); a3++){////g3 will be containing the final dg, g1, g2 will contain a and b as in the cost function LAMBDA = ||a + b*g||^2
+		for (unsigned int a3 = 0; a3 < module->g3.size(); a3++){
+		    // g3 will be containing the final dg, g1, g2 will contain a and b
+		    // as in the cost function LAMBDA = ||a + b*g||^2
 			for (unsigned int a = 0; a < module->g3.size(); a++){
 				cbl = info->bl1dmatrix[a3][a];
                 // cbl is unsigned and so gauranteed >= 0
@@ -616,8 +582,9 @@ void gaincal(vector<complex float> *data,
 		}
 
 
-		////Update g and ubl, do not update single-bl bls since they are not reversible. Will reverse this step later is chisq increased
-		//float fraction;
+		// Update g and ubl, do not update single-bl bls since they are not
+		// reversible. Will reverse this step later is chisq increased
+		// float fraction;
 		for (unsigned int a = 0; a < module->g3.size(); a++){
 			module->g0[a] = stepsize2 * module->g0[a] + stepsize * module->g3[a];
 		}
@@ -625,7 +592,9 @@ void gaincal(vector<complex float> *data,
 		//compute chisq and decide convergence
 		chisq2 = 0;
 		for (unsigned int b = 0; b < (module->cdata2).size(); b++){
-			if ((info->ublcount)[info->bltoubl[b]] > 1){//automatically use 0 for single-bl ubls, their actaul values are not updated yet
+			if ((info->ublcount)[info->bltoubl[b]] > 1){
+			    // automatically use 0 for single-bl ubls, their actaul values 
+			    // are not updated yet
 				a1 = info->bl2d[b][0];
 				a2 = info->bl2d[b][1];
 				gain = conjf(module->g0[a1]) * module->g0[a2];
@@ -636,7 +605,9 @@ void gaincal(vector<complex float> *data,
 		}
 		componentchange = (chisq - chisq2) / chisq;
 
-		if (componentchange > 0){//if improved, keep g0 and ubl0 updates, and update single-bl ubls and chisq
+		if (componentchange > 0){
+		    // if improved, keep g0 and ubl0 updates, and update single-bl ubls
+		    // and chisq
 			chisq = chisq2;
 		} else {//reverse g0 and ubl0 changes
 			iter--;
@@ -662,22 +633,8 @@ void gaincal(vector<complex float> *data,
 		calpar->at(0) += 0;
 		calpar->at(2) = starting_chisq;
 	}
-	//cout << "lincal DBG v "  << module->cdata1[DBGbl][0] << " " << module->cdata1[DBGbl][1] << endl<<flush;
-	//cout << "lincal DBG c0g0g0 "  << module->cdata2[DBGbl][0] << " " << module->cdata2[DBGbl][1] << endl<<flush;
 	return;
 }
-
-//void loadGoodVisibilities(vector<vector<vector<vector<float> > > > * rawdata, vector<vector<vector<vector<float> > > >* receiver, redundantinfo* info, int xy){////0 for xx 3 for yy
-//	for (unsigned int t = 0; t < receiver->size(); t++){
-//		for (unsigned int f = 0; f < receiver->at(0).size(); f++){
-//			for (unsigned int bl = 0; bl < receiver->at(0)[0].size(); bl++){
-//				receiver->at(t)[f][bl][0] = rawdata->at(xy)[t][f][2 * info->subsetbl[bl]];
-//				receiver->at(t)[f][bl][1] = rawdata->at(xy)[t][f][2 * info->subsetbl[bl] + 1];
-//			}
-//		}
-//	}
-//	return;
-//}
 
 void removeDegen(vector<float> *calpar, redundantinfo * info, calmemmodule* module){
     //forces the calibration parameters to have average 1 amp, and no shifting
@@ -699,15 +656,16 @@ void removeDegen(vector<float> *calpar, redundantinfo * info, calmemmodule* modu
 	}
 
 	////compute amp delta
-	float ampfactor = 0;//average |g|, divide ant calpar by this, multiply ublfit by square this
+	float ampfactor = 0;
+	// average |g|, divide ant calpar by this, multiply ublfit by square this
 	for (int a = 0 ; a < info->nAntenna; a ++){
 		ampfactor += pow(10, calpar->at(3 + a));
 	}
 	ampfactor = ampfactor / info->nAntenna;
-	//cout << ampfactor << endl;
 
 	////compute phase delta
-	vecmatmul(&(info->degenM), &(pha1), &(module->x1));//x1: add ant calpar and ubl fit by this
+	vecmatmul(&(info->degenM), &(pha1), &(module->x1));
+	// x1: add ant calpar and ubl fit by this
 
 	////correct ant calpar
 	for (int a = 0 ; a < info->nAntenna; a ++){
