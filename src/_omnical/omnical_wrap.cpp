@@ -1,5 +1,6 @@
 #include "include/omnical_wrap.h"
 #include <math.h>
+#include <complex.h>
 #define QUOTE(a) # a
 #define uint unsigned int
 #define CHK_NULL(a) \
@@ -663,10 +664,10 @@ PyObject *redcal_wrap(PyObject *self, PyObject *args, PyObject *kwds) {//in plac
     dims[0] = nint = PyArray_DIM(data,0);
     dims[1] = nfreq = PyArray_DIM(data,1);
     dims[2] = nbls = PyArray_DIM(data,2);
-    vector<vector<float> > data_v(nbls, vector<float>(2, 0));
+    vector<complex float> data_v(nbls, 0);
     vector<float> calpar_v(3 + 2*(redinfo->info.ublindex.size() + redinfo->info.nAntenna) + redinfo->info.nAntenna, 0);
-    vector<vector<float> >additivein_v(nbls, vector<float>(2, 0));
-    vector<vector<float> >additiveout_v(nbls, vector<float>(2, 0));
+    vector<complex float> additivein_v(nbls, 0);
+    vector<complex float> additiveout_v(nbls, 0);
     // check that dims of additivein and data match
     if (PyArray_NDIM(additivein) != 3 || PyArray_TYPE(additivein) != PyArray_CFLOAT
             || PyArray_DIM(additivein,0) != nint || PyArray_DIM(additivein,1) != nfreq || PyArray_DIM(additivein,2) != nbls) {
@@ -698,10 +699,10 @@ PyObject *redcal_wrap(PyObject *self, PyObject *args, PyObject *kwds) {//in plac
         for (int f = 0; f < nfreq; f++){
             // copy from input arrays
             for (int b = 0; b < nbls; b++) {
-                data_v[b][0] = ((float *) PyArray_GETPTR3(data,t,f,b))[0];
-                data_v[b][1] = ((float *) PyArray_GETPTR3(data,t,f,b))[1];
-                additivein_v[b][0] = ((float *) PyArray_GETPTR3(additivein,t,f,b))[0];
-                additivein_v[b][1] = ((float *) PyArray_GETPTR3(additivein,t,f,b))[1];
+                data_v[b] = ((float *) PyArray_GETPTR3(data,t,f,b))[0];
+                data_v[b] += I*((float *) PyArray_GETPTR3(data,t,f,b))[1];
+                additivein_v[b] = ((float *) PyArray_GETPTR3(additivein,t,f,b))[0];
+                additivein_v[b] += I*((float *) PyArray_GETPTR3(additivein,t,f,b))[1];
             }
 
             if (uselogcal) {
@@ -762,8 +763,8 @@ PyObject *redcal_wrap(PyObject *self, PyObject *args, PyObject *kwds) {//in plac
             }
             // copy to output arrays
             for (int b = 0; b < nbls; b++) {
-                ((float *) PyArray_GETPTR3(additiveout,t,f,b))[0] = additiveout_v[b][0];
-                ((float *) PyArray_GETPTR3(additiveout,t,f,b))[1] = additiveout_v[b][1];
+                ((float *) PyArray_GETPTR3(additiveout,t,f,b))[0] = crealf(additiveout_v[b]);
+                ((float *) PyArray_GETPTR3(additiveout,t,f,b))[1] = cimagf(additiveout_v[b]);
             }
             for (unsigned int b = 0; b < calpar_v.size(); b++) {
                 ((float *) PyArray_GETPTR3(calpar,t,f,b))[0] = calpar_v[b];
@@ -795,10 +796,10 @@ PyObject *gaincal_wrap(PyObject *self, PyObject *args, PyObject *kwds) {//in pla
     nint = PyArray_DIM(data,0);
     nfreq = PyArray_DIM(data,1);
     nbls = PyArray_DIM(data,2);
-    vector<vector<float> > data_v(nbls, vector<float>(2, 0));
+    vector<complex float> data_v(nbls, 0);
     vector<float> calpar_v(3 + 2*(redinfo->info.ublindex.size()+ redinfo->info.nAntenna), 0);
-    vector<vector<float> >additivein_v(nbls, vector<float>(2, 0));
-    vector<vector<float> >additiveout_v(nbls, vector<float>(2, 0));
+    vector<complex float> additivein_v(nbls, 0);
+    vector<complex float> additiveout_v(nbls, 0);
     // check that dims of additivein and data match
     if (PyArray_NDIM(additivein) != 3 || PyArray_TYPE(additivein) != PyArray_CFLOAT
             || PyArray_DIM(additivein,0) != nint || PyArray_DIM(additivein,1) != nfreq || PyArray_DIM(additivein,2) != nbls) {
@@ -827,10 +828,10 @@ PyObject *gaincal_wrap(PyObject *self, PyObject *args, PyObject *kwds) {//in pla
         for (int f = 0; f < nfreq; f++){
             // copy from input arrays
             for (int b = 0; b < nbls; b++) {
-                data_v[b][0] = ((float *) PyArray_GETPTR3(data,t,f,b))[0];
-                data_v[b][1] = ((float *) PyArray_GETPTR3(data,t,f,b))[1];
-                additivein_v[b][0] = ((float *) PyArray_GETPTR3(additivein,t,f,b))[0];
-                additivein_v[b][1] = ((float *) PyArray_GETPTR3(additivein,t,f,b))[1];
+                data_v[b] = ((float *) PyArray_GETPTR3(data,t,f,b))[0];
+                data_v[b] += I*((float *) PyArray_GETPTR3(data,t,f,b))[1];
+                additivein_v[b] = ((float *) PyArray_GETPTR3(additivein,t,f,b))[0];
+                additivein_v[b] += I*((float *) PyArray_GETPTR3(additivein,t,f,b))[1];
             }
 
 
@@ -849,8 +850,8 @@ PyObject *gaincal_wrap(PyObject *self, PyObject *args, PyObject *kwds) {//in pla
 
             // copy to output arrays
             for (int b = 0; b < nbls; b++) {
-                ((float *) PyArray_GETPTR3(additiveout,t,f,b))[0] = additiveout_v[b][0];
-                ((float *) PyArray_GETPTR3(additiveout,t,f,b))[1] = additiveout_v[b][1];
+                ((float *) PyArray_GETPTR3(additiveout,t,f,b))[0] = crealf(additiveout_v[b]);
+                ((float *) PyArray_GETPTR3(additiveout,t,f,b))[1] = cimagf(additiveout_v[b]);
             }
             for (unsigned int b = 0; b < calpar_v.size(); b++) {
                 ((float *) PyArray_GETPTR3(calpar,t,f,b))[0] = calpar_v[b];

@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <functional>
 #include <numeric>
+#include <complex.h>
 #define uint unsigned int
 using namespace std;
 
@@ -74,24 +75,24 @@ struct calmemmodule{//temporary memory modules for logcaladditive and lincal
 	vector<float> x2;
 	vector<float> x3;
 	vector<float> x4;
-	vector<vector<float> > g0;
-	vector<vector<float> > g1;
-	vector<vector<float> > g2;
-	vector<vector<float> > g3;
-	vector<vector<float> > adata1;
-	vector<vector<float> > adata2;
-	vector<vector<float> > adata3;
-	vector<vector<float> > cdata1;
-	vector<vector<float> > cdata2;
-	vector<vector<float> > cdata3;
-	vector<vector<float> > ubl1;//nubl by 2
-	vector<vector<float> > ubl2;
-	vector<vector<float> > ubl3;
-	vector<vector<float> > ubl0;
+	vector<complex float> g0;
+	vector<complex float> g1;
+	vector<complex float> g2;
+	vector<complex float> g3;
+	vector<complex float> adata1;
+	vector<complex float> adata2;
+	vector<complex float> adata3;
+	vector<complex float> cdata1;
+	vector<complex float> cdata2;
+	vector<complex float> cdata3;
+	vector<complex float> ubl1;//nubl by 2
+	vector<complex float> ubl2;
+	vector<complex float> ubl3;
+	vector<complex float> ubl0;
 	vector<vector<float> > ublgrp1;//regrouped baseline according to ubl, second dimension of unequal length of ubl count
 	vector<vector<float> > ublgrp2;
-	vector<vector<vector<float> > > ubl2dgrp1;//regrouped baseline according to ubl, second dimension of unequal length of ubl count
-	vector<vector<vector<float> > > ubl2dgrp2;
+	vector<vector<complex float> > ubl2dgrp1;//regrouped baseline according to ubl, second dimension of unequal length of ubl count
+	vector<vector<complex float> > ubl2dgrp2;
 };
 
 //bool readredundantinfo(string filepath, redundantinfo* info);
@@ -132,9 +133,9 @@ float medianAngle (vector<float> *list); //Not using pointer because the process
 /////////////////////////////////////////////
 
 void vecmatmul(vector<vector<float> > * Afitting, vector<float> * v, vector<float> * ampfit);
-void logcaladd(vector<vector<float> >* data, vector<vector<float> >* additivein, redundantinfo* info, vector<float>* calpar, vector<vector<float> >* additiveout, int computeUBLFit, int compute_calpar, calmemmodule* module);
-void lincal(vector<vector<float> >* data, vector<vector<float> >* additivein, redundantinfo* info, vector<float>* calpar, vector<vector<float> >* additiveout, int computeUBLFit, calmemmodule* module, float convergethresh, int maxiter, float stepsize);//if command is 1, compute the ubl estimates given data and calpars, rather than read ubl estimates from input; additive term will only be updated if lincal can achieve a lower chi^2
-void gaincal(vector<vector<float> >* data, vector<vector<float> >* additivein, redundantinfo* info, vector<float>* calpar, vector<vector<float> >* additiveout, calmemmodule* module, float convergethresh, int maxiter, float stepsize);
+void logcaladd(vector<complex float> *data, vector<complex float> *additivein, redundantinfo* info, vector<float>* calpar, vector<complex float> *additiveout, int computeUBLFit, int compute_calpar, calmemmodule* module);
+void lincal(vector<complex float> *data, vector<complex float> *additivein, redundantinfo* info, vector<float>* calpar, vector<complex float> *additiveout, int computeUBLFit, calmemmodule* module, float convergethresh, int maxiter, float stepsize);//if command is 1, compute the ubl estimates given data and calpars, rather than read ubl estimates from input; additive term will only be updated if lincal can achieve a lower chi^2
+void gaincal(vector<complex float> *data, vector<complex float> *additivein, redundantinfo* info, vector<float>* calpar, vector<complex float> *additiveout, calmemmodule* module, float convergethresh, int maxiter, float stepsize);
 //void loadGoodVisibilities(vector<vector<vector<vector<float> > > > * rawdata, vector<vector<vector<vector<float> > > >* receiver, redundantinfo* info, int xy);
 void removeDegen(vector<float> *calpar, redundantinfo * info, calmemmodule* module);//forces the calibration parameters to have average 1 amp, and no shifting the image in phase. Note: 1) If you have not absolute calibrated the data, there's no point in running this, because this can only ensure that the calpars don't screw up already absolute calibrated data. 2) the antloc and ubl stored in redundant info must be computed from idealized antloc, otherwise the error in antloc from perfect redundancy will roll into this result, in an unknown fashion.
 #endif
