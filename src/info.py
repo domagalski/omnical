@@ -96,6 +96,7 @@ class RedundantInfo(_O.RedundantInfo):
         Each baseline is a (i,j) tuple, where i,j are antenna indices.  To ensure baselines are
         oriented to be redundant, it may be necessary to have i > j.  If this is the case, then
         when calibrating visibilities listed as j,i data will have to be conjugated.'''
+        # XXX this is really slow
         reds = [[(int(i),int(j)) for i,j in gp] for gp in reds]
         ants = {}
         for ubl_gp in reds:
@@ -115,7 +116,7 @@ class RedundantInfo(_O.RedundantInfo):
         for n,(i,j) in enumerate(self.bl2d): bl1dmatrix[i,j], bl1dmatrix[j,i] = n,n
         self.bl1dmatrix = bl1dmatrix
         self.blperant = np.array([ants[a] for a in sorted(ants.keys())], dtype=int)
-        #A: A matrix for logcal amplitude
+        #A: A matrix for logcal amplitude XXX this is very slow
         A,B = np.zeros((self.nBaseline,self.nAntenna+nUBL)), np.zeros((self.nBaseline,self.nAntenna+nUBL))
         for n,(i,j) in enumerate(self.bl2d):
             A[n,i], A[n,j], A[n,self.nAntenna+self.bltoubl[n]] = 1,1,1
@@ -131,7 +132,7 @@ class RedundantInfo(_O.RedundantInfo):
         m1 = -a.dot(la.pinv(a.T.dot(a))).dot(a.T)
         m2 = d.dot(la.pinv(a.T.dot(a))).dot(a.T)
         self.degenM = np.append(m1,m2,axis=0)
-        self.update()
+        self.update() # XXX slow
     def get_reds(self):
         '''After initialization, return redundancies in the same format used in init_from_reds.  Requires that
         ublcount, ublindex, subsetant, and bl2d be set.'''

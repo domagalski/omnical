@@ -205,7 +205,6 @@ void logcaladd(vector<complex float> *data,
 
 	////initialize data and g0 ubl0
 	for (unsigned int b = 0; b < (module->cdata1).size(); b++){
-	    // XXX
 		module->cdata1[b] = data->at(b) - additivein->at(b);
 	}
 
@@ -216,6 +215,7 @@ void logcaladd(vector<complex float> *data,
 		module->g0[a]  = amptmp * cos(calpar->at(3 + info->nAntenna + a));
 		module->g0[a] += amptmp*I*sin(calpar->at(3 + info->nAntenna + a));
 	}
+
 	if (computeUBLFit != 1){
 		for (int u = 0; u < nubl; u++){
 			module->ubl0[u] =  calpar->at(3 + 2 * info->nAntenna + 2 * u);
@@ -235,8 +235,6 @@ void logcaladd(vector<complex float> *data,
 			module->ubl0[u] = minimizecomplex(&(module->ubl2dgrp1[u]), &(module->ubl2dgrp2[u]));
 		}
 	}
-
-
 
 	int nant = info->nAntenna;
 	int ncross = info->bl2d.size();
@@ -278,6 +276,7 @@ void logcaladd(vector<complex float> *data,
 			module->x3[i] += module->amp1[info->Atsparse[i][j]];
 		}
 	}
+
 	fill(module->x4.begin(), module->x4.end(), 0);////Bt.y
 	for (unsigned int i = 0; i < info->Btsparse.size(); i++){
 		for (unsigned int j = 0; j < info->Btsparse[i].size(); j++){
@@ -294,6 +293,7 @@ void logcaladd(vector<complex float> *data,
 		float phase =  module->x2[nant + info->bltoubl[b]] - module->x2[ai] + module->x2[aj] - calpar->at(3 + nant + ai) + calpar->at(3 + nant + aj);
 		additiveout->at(b) = data->at(b) - amp*(cos(phase) - I*sin(phase));
 	}
+
 	if(compute_calpar == 0){////compute additive term only
 		calpar->at(1) = pow(norm(additiveout), 2);
 		//cout << norm(additiveout) << endl;
@@ -356,20 +356,17 @@ void lincal(vector<complex float> *data,
 		}
 	}
 
-	float starting_chisq, chisq, chisq2, delta;
-	complex float gain, difftmp;
+	float starting_chisq, chisq, chisq2;
+	complex float gain;
 	int a1, a2; // antenna indices
 	chisq = 0;
 	for (unsigned int b = 0; b < (module->cdata2).size(); b++){
 		a1 = info->bl2d[b][0];
 		a2 = info->bl2d[b][1];
 		gain = conjf(module->g0[a1]) * module->g0[a2];
-		module->cdata2[b] = gain * module->ubl0[info->bltoubl[b]];
-		difftmp = module->cdata2[b] - module->cdata1[b];
-		delta = crealf(difftmp * conjf(difftmp));
-		chisq += delta;
-        // XXX have a starting_chisq_ant?
+		module->cdata2[b] = gain * module->ubl0[info->bltoubl[b]] - module->cdata1[b];
 	}
+	chisq = pow(norm(&(module->cdata2)), 2);
 	starting_chisq = chisq;
 
 	////start iterations
@@ -433,11 +430,11 @@ void lincal(vector<complex float> *data,
 				a1 = info->bl2d[b][0];
 				a2 = info->bl2d[b][1];
 				gain = conjf(module->g0[a1]) * module->g0[a2];
-				module->cdata2[b] = gain * module->ubl0[info->bltoubl[b]];
-		        difftmp = module->cdata2[b] - module->cdata1[b];
-		        chisq2 += crealf(difftmp * conjf(difftmp));
+				module->cdata2[b] = gain * module->ubl0[info->bltoubl[b]]- module->cdata1[b];
 			}
+            else module->cdata2[b] = 0;
 		}
+		chisq2 = pow(norm(&(module->cdata2)), 2);
 		componentchange = (chisq - chisq2) / chisq;
 
         if (componentchange > 0){
@@ -486,16 +483,17 @@ void lincal(vector<complex float> *data,
 		calpar->at(0) += iter;
 		calpar->at(2) = chisq;
 		for (unsigned int b = 0; b < (module->cdata2).size(); b++){
-			additiveout->at(b) = module->cdata1[b] - module->cdata2[b];
+			additiveout->at(b) = -module->cdata2[b];
 		}
+
         // Create a chisq for each antenna. Right now, this is done at every
         // time and frequency, since that's how lincal is called, but that can
         // be summed later over all times and frequencies to get a chisq for
         // each antenna.
+        float delta;
         int chisq_ant = 3 + 2*(info -> nAntenna + nubl);
         for (int b = 0; b < (module -> cdata2).size(); b++){
-		    difftmp = module->cdata2[b] - module->cdata1[b];
-		    delta = crealf(difftmp * conjf(difftmp));
+		    delta = crealf(module->cdata2[b] * conjf(module->cdata2[b]));
             a1 = info->bl2d[b][0];
             a2 = info->bl2d[b][1];
             calpar -> at(chisq_ant + a1) += delta;
