@@ -47,7 +47,7 @@ setup(name = 'omnical',
             #    ['*.cpp', '*.c', '*.cc']),
             include_dirs = ['src/_omnical/include', numpy.get_include()],
             extra_compile_args=['-Wno-write-strings', '-O3'],
-            libraries=['cblas', 'atlas']
+            libraries=['cblas', 'atlas', 'OpenCL']
         )
     ],
     scripts = ['scripts/firstcal4.py', 'scripts/omnical4.py', 'scripts/omnical_PSA128.py', 'scripts/omnical2npz.py', 'scripts/plot_omni.py', 'scripts/plot_treasure.py', 'scripts/first_cal.py', 'scripts/bury_treasure.py', 'scripts/apply_omnigain.py', 'scripts/dr_compress.py'],

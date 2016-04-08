@@ -1,12 +1,24 @@
 #include "include/omnical_wrap.h"
 #include <math.h>
 #include <complex.h>
+
+// OpenCL definitions.
+#ifdef __APPLE__
+    #include "OpenCL/opencl.h"
+#else
+    #include "CL/cl.h"
+#endif
+#ifdef AMD
+    #include <CL/cl_ext.h>
+#endif
+
 #define QUOTE(a) # a
 #define uint unsigned int
 #define CHK_NULL(a) \
     if (a == NULL) { \
         PyErr_Format(PyExc_MemoryError, "Failed to allocate %s", QUOTE(a)); \
         return NULL; }
+
 
 /*____                           _                    _
  / ___|_ __ ___  _   _ _ __   __| |_      _____  _ __| | __
@@ -637,7 +649,6 @@ PyTypeObject RedInfoType = {
     RedInfoObject_new,       /* tp_new */
 };
 
-
 /*_  __           _       _                       _   _               _
 |  \/  | ___   __| |_   _| | ___   _ __ ___   ___| |_| |__   ___   __| |___
 | |\/| |/ _ \ / _` | | | | |/ _ \ | '_ ` _ \ / _ \ __| '_ \ / _ \ / _` / __|
@@ -688,6 +699,50 @@ PyObject *redcal_wrap(PyObject *self, PyObject *args, PyObject *kwds) {//in plac
     if (PyArray_NDIM(calpar) != 3 || PyArray_TYPE(calpar) != PyArray_FLOAT
             || PyArray_DIM(calpar,0) != nint || PyArray_DIM(calpar,1) != nfreq || (uint)PyArray_DIM(calpar,2) != calpar_v.size()) {
         PyErr_Format(PyExc_ValueError, "calpar is expected to be a 3D numpy array of float32 with the first 2 dimensions identical to those of data and the third being 3+2(nAnt+nUBL)+nAnt.");
+        return NULL;
+    }
+
+    /***************************************************************************
+     * Set up OpenCL ***********************************************************
+     **************************************************************************/
+    // Error parameter.
+    cl_int error = CL_SUCCESS;
+
+    // Query what platforms are available
+    cl_uint platformIdCount = 0;
+    if (clGetPlatformIDs(0, NULL, &platformIdCount) != CL_SUCCESS){
+        PyErr_Format(PyExc_RuntimeError, "Error getting Platform ID count.");
+        return NULL;
+    }
+
+    cl_platform_id *platformIds = (cl_platform_id *)malloc(platformIdCount*sizeof(cl_platform_id));
+    if (clGetPlatformIDs(platformIdCount, platformIds, NULL) != CL_SUCCESS){
+        PyErr_Format(PyExc_RuntimeError, "Error getting Platform ID's.");
+        return NULL;
+    }
+
+    // Query the device for the first platform found
+    cl_uint deviceIdCount = 0;
+    if (clGetDeviceIDs(platformIds[0], CL_DEVICE_TYPE_ALL, 0, NULL, &deviceIdCount) != CL_SUCCESS){
+        PyErr_Format(PyExc_RuntimeError, "Error getting device ID count.");
+        return NULL;
+    }
+
+    cl_device_id *deviceIds = (cl_device_id *)malloc(deviceIdCount*sizeof(cl_device_id));
+    if (clGetDeviceIDs(platformIds[0], CL_DEVICE_TYPE_ALL, deviceIdCount, deviceIds, NULL) != CL_SUCCESS){
+        PyErr_Format(PyExc_RuntimeError, "Error getting device ID's.");
+        return NULL;
+    }
+
+    // Create a context.
+    const cl_context_properties contextProperties[] = {
+        CL_CONTEXT_PLATFORM,
+        (cl_context_properties)platformIds[0],
+        0, 0 // not sure if the extra 0 at the end is needed.
+    };
+    cl_context context = clCreateContext(contextProperties, deviceIdCount, deviceIds, NULL, NULL, &error);
+    if (error != CL_SUCCESS){
+        PyErr_Format(PyExc_RuntimeError, "Error creating OpenCL context.");
         return NULL;
     }
 
