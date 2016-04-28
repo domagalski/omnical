@@ -24,6 +24,17 @@ extern "C" {
     #include <cblas.h>
 }
 
+#ifdef __APPLE__
+    #include <OpenCL/opencl.h>
+#else
+    #include <CL/cl.h>
+#endif
+#ifdef AMD
+    #include <CL/cl_ext.h>
+#endif
+
+#include "complexCL.h"
+
 struct redundantinfo{
 	int nAntenna;//number of good antennas among all (64) antennas, same as the length of subsetant
 	//int nUBL;//number of unique baselines
@@ -64,6 +75,7 @@ struct redundantinfo{
 
 };
 
+// Legacy version for code not being put on a GPU
 struct calmemmodule{//temporary memory modules for logcaladditive and lincal
 	vector<float> amp1;
 	vector<float> amp2;
@@ -95,8 +107,41 @@ struct calmemmodule{//temporary memory modules for logcaladditive and lincal
 	vector<vector<complex float> > ubl2dgrp2;
 };
 
+// CL host execution version
+struct calmemmodule_clh{//temporary memory modules for logcaladditive and lincal
+	vector<float> amp1;
+	vector<float> amp2;
+	vector<float> amp3;
+	vector<float> pha1;
+	vector<float> pha2;
+	vector<float> pha3;
+	vector<float> x1;
+	vector<float> x2;
+	vector<float> x3;
+	vector<float> x4;
+	vector<cfloat> g0;
+	vector<cfloat> g1;
+	vector<cfloat> g2;
+	vector<cfloat> g3;
+	vector<cfloat> adata1;
+	vector<cfloat> adata2;
+	vector<cfloat> adata3;
+	vector<cfloat> cdata1;
+	vector<cfloat> cdata2;
+	vector<cfloat> cdata3;
+	vector<cfloat> ubl1;//nubl by 2
+	vector<cfloat> ubl2;
+	vector<cfloat> ubl3;
+	vector<cfloat> ubl0;
+	vector<vector<float> > ublgrp1;//regrouped baseline according to ubl, second dimension of unequal length of ubl count
+	vector<vector<float> > ublgrp2;
+	vector<vector<cfloat> > ubl2dgrp1;//regrouped baseline according to ubl, second dimension of unequal length of ubl count
+	vector<vector<cfloat> > ubl2dgrp2;
+};
+
 //bool readredundantinfo(string filepath, redundantinfo* info);
 void initcalmodule(calmemmodule* module, redundantinfo* info);
+void initcalmodule(calmemmodule_clh* module, redundantinfo* info);
 
 ////void iqDemod(vector<vector<vector<vector<vector<float> > > > > *data, vector<vector<vector<vector<vector<float> > > > > *data_out, int nIntegrations, int nFrequencies, int nAnt);
 
@@ -107,14 +152,16 @@ void initcalmodule(calmemmodule* module, redundantinfo* info);
 float square(float x);
 
 float amp(vector<float> * x);
-
 float amp(float x, float y);
+float amp(cfloat cx);
 
 float phase(float re, float im);
-
 float phase(vector<float> * c);
+float phase(cfloat cx);
 
 float norm(vector<vector<float> > * v);
+float norm(vector<complex float> *vec);
+float norm(vector<cfloat> *vec);
 
 vector<float> conjugate (vector<float> x);
 
@@ -133,9 +180,9 @@ float medianAngle (vector<float> *list); //Not using pointer because the process
 /////////////////////////////////////////////
 
 void vecmatmul(vector<vector<float> > * Afitting, vector<float> * v, vector<float> * ampfit);
-void logcaladd(vector<complex float> *data, vector<complex float> *additivein, redundantinfo* info, vector<float>* calpar, vector<complex float> *additiveout, int computeUBLFit, int compute_calpar, calmemmodule* module);
-void lincal(vector<complex float> *data, vector<complex float> *additivein, redundantinfo* info, vector<float>* calpar, vector<complex float> *additiveout, int computeUBLFit, calmemmodule* module, float convergethresh, int maxiter, float stepsize);//if command is 1, compute the ubl estimates given data and calpars, rather than read ubl estimates from input; additive term will only be updated if lincal can achieve a lower chi^2
+void logcaladd(vector<cfloat> *data, vector<cfloat> *additivein, redundantinfo* info, vector<float>* calpar, vector<cfloat> *additiveout, int computeUBLFit, int compute_calpar, calmemmodule_clh *module);
+void lincal(vector<cfloat> *data, vector<cfloat> *additivein, redundantinfo* info, vector<float>* calpar, vector<cfloat> *additiveout, int computeUBLFit, calmemmodule_clh* module, float convergethresh, int maxiter, float stepsize);//if command is 1, compute the ubl estimates given data and calpars, rather than read ubl estimates from input; additive term will only be updated if lincal can achieve a lower chi^2
 void gaincal(vector<complex float> *data, vector<complex float> *additivein, redundantinfo* info, vector<float>* calpar, vector<complex float> *additiveout, calmemmodule* module, float convergethresh, int maxiter, float stepsize);
 //void loadGoodVisibilities(vector<vector<vector<vector<float> > > > * rawdata, vector<vector<vector<vector<float> > > >* receiver, redundantinfo* info, int xy);
-void removeDegen(vector<float> *calpar, redundantinfo * info, calmemmodule* module);//forces the calibration parameters to have average 1 amp, and no shifting the image in phase. Note: 1) If you have not absolute calibrated the data, there's no point in running this, because this can only ensure that the calpars don't screw up already absolute calibrated data. 2) the antloc and ubl stored in redundant info must be computed from idealized antloc, otherwise the error in antloc from perfect redundancy will roll into this result, in an unknown fashion.
+void removeDegen(vector<float> *calpar, redundantinfo * info, calmemmodule_clh* module);//forces the calibration parameters to have average 1 amp, and no shifting the image in phase. Note: 1) If you have not absolute calibrated the data, there's no point in running this, because this can only ensure that the calpars don't screw up already absolute calibrated data. 2) the antloc and ubl stored in redundant info must be computed from idealized antloc, otherwise the error in antloc from perfect redundancy will roll into this result, in an unknown fashion.
 #endif

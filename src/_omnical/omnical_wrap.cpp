@@ -4,13 +4,15 @@
 
 // OpenCL definitions.
 #ifdef __APPLE__
-    #include "OpenCL/opencl.h"
+    #include <OpenCL/opencl.h>
 #else
-    #include "CL/cl.h"
+    #include <CL/cl.h>
 #endif
 #ifdef AMD
     #include <CL/cl_ext.h>
 #endif
+
+#include "include/complexCL.h"
 
 #define QUOTE(a) # a
 #define uint unsigned int
@@ -18,7 +20,6 @@
     if (a == NULL) { \
         PyErr_Format(PyExc_MemoryError, "Failed to allocate %s", QUOTE(a)); \
         return NULL; }
-
 
 /*____                           _                    _
  / ___|_ __ ___  _   _ _ __   __| |_      _____  _ __| | __
@@ -675,10 +676,10 @@ PyObject *redcal_wrap(PyObject *self, PyObject *args, PyObject *kwds) {//in plac
     dims[0] = nint = PyArray_DIM(data,0);
     dims[1] = nfreq = PyArray_DIM(data,1);
     dims[2] = nbls = PyArray_DIM(data,2);
-    vector<complex float> data_v(nbls, 0);
+    vector<cfloat> data_v(nbls);
     vector<float> calpar_v(3 + 2*(redinfo->info.ublindex.size() + redinfo->info.nAntenna) + redinfo->info.nAntenna, 0);
-    vector<complex float> additivein_v(nbls, 0);
-    vector<complex float> additiveout_v(nbls, 0);
+    vector<cfloat> additivein_v(nbls);
+    vector<cfloat> additiveout_v(nbls);
     // check that dims of additivein and data match
     if (PyArray_NDIM(additivein) != 3 || PyArray_TYPE(additivein) != PyArray_CFLOAT
             || PyArray_DIM(additivein,0) != nint || PyArray_DIM(additivein,1) != nfreq || PyArray_DIM(additivein,2) != nbls) {
@@ -747,19 +748,19 @@ PyObject *redcal_wrap(PyObject *self, PyObject *args, PyObject *kwds) {//in plac
     }
 
     // allocate output additiveout array
-    calmemmodule module;////memory module to be reused in order to avoid redeclaring all sorts of long vectors
+    calmemmodule_clh module;////memory module to be reused in order to avoid redeclaring all sorts of long vectors
     initcalmodule(&module, &(redinfo->info));
 
     for (int t = 0; t < nint; t++){
         for (int f = 0; f < nfreq; f++){
             // copy from input arrays
             for (int b = 0; b < nbls; b++) {
-                data_v[b] = ((float *) PyArray_GETPTR3(data,t,f,b))[0];
-                data_v[b] += I*((float *) PyArray_GETPTR3(data,t,f,b))[1];
-                additivein_v[b] = ((float *) PyArray_GETPTR3(additivein,t,f,b))[0];
-                additivein_v[b] += I*((float *) PyArray_GETPTR3(additivein,t,f,b))[1];
+                data_v[b].x = ((float *) PyArray_GETPTR3(data,t,f,b))[0];
+                data_v[b].y = ((float *) PyArray_GETPTR3(data,t,f,b))[1];
+                additivein_v[b].x = ((float *) PyArray_GETPTR3(additivein,t,f,b))[0];
+                additivein_v[b].y = ((float *) PyArray_GETPTR3(additivein,t,f,b))[1];
             }
-
+            
             if (uselogcal) {
                 for (unsigned int n = 0; n < calpar_v.size(); n ++){
                     calpar_v[n] = ((float *) PyArray_GETPTR2(calpar, t, f))[n];
@@ -818,8 +819,8 @@ PyObject *redcal_wrap(PyObject *self, PyObject *args, PyObject *kwds) {//in plac
             }
             // copy to output arrays
             for (int b = 0; b < nbls; b++) {
-                ((float *) PyArray_GETPTR3(additiveout,t,f,b))[0] = crealf(additiveout_v[b]);
-                ((float *) PyArray_GETPTR3(additiveout,t,f,b))[1] = cimagf(additiveout_v[b]);
+                ((float *) PyArray_GETPTR3(additiveout,t,f,b))[0] = creal(additiveout_v[b]);
+                ((float *) PyArray_GETPTR3(additiveout,t,f,b))[1] = cimag(additiveout_v[b]);
             }
             for (unsigned int b = 0; b < calpar_v.size(); b++) {
                 ((float *) PyArray_GETPTR3(calpar,t,f,b))[0] = calpar_v[b];

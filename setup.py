@@ -24,6 +24,13 @@ import os, glob, numpy
 
 __version__ = '4.0.4'
 
+def include_paths():
+    amd = 'AMDAPPSDKROOT'
+    include = ['src/_omnical/include', numpy.get_include()]
+    if amd in os.environ.keys():
+        include.append(os.path.join(os.environ[amd], 'include'))
+    return include
+
 def indir(dir, files): return [dir+f for f in files]
 def globdir(dir, files):
     rv = []
@@ -42,12 +49,15 @@ setup(name = 'omnical',
     packages = ['omnical'],
     ext_modules = [
         Extension('omnical._omnical',
-            ['src/_omnical/omnical_wrap.cpp','src/_omnical/omnical_redcal.cc'],
+            ['src/_omnical/omnical_wrap.cpp',
+             'src/_omnical/omnical_redcal.cc',
+             'src/_omnical/complexCL.cxx'],
             #globdir('src/_omnical/',
             #    ['*.cpp', '*.c', '*.cc']),
-            include_dirs = ['src/_omnical/include', numpy.get_include()],
-            extra_compile_args=['-Wno-write-strings', '-O3'],
-            libraries=['cblas', 'atlas', 'OpenCL']
+            include_dirs = include_paths(),
+            extra_compile_args=['-Wno-write-strings', '-O3', '-DHOSTBUILD'],
+            #libraries=['cblas', 'atlas', 'OpenCL']
+            libraries=['OpenCL', 'blas']
         )
     ],
     scripts = ['scripts/firstcal4.py', 'scripts/omnical4.py', 'scripts/omnical_PSA128.py', 'scripts/omnical2npz.py', 'scripts/plot_omni.py', 'scripts/plot_treasure.py', 'scripts/first_cal.py', 'scripts/bury_treasure.py', 'scripts/apply_omnigain.py', 'scripts/dr_compress.py'],
